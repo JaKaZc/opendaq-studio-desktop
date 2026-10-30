@@ -293,6 +293,11 @@ make desktop    # builds the UI and starts the app from source
 5. puts everything into `engine/dist/darwin-arm64/`, with the modules in its
    `modules/` folder.
 
+The openDAQ release, `3.40.3`, is in the file `OPENDAQ_VERSION`. The SDK core
+and the wheel both come from it, and the build stops with a message when the
+two are not that one release. To move to another release, change the file in
+this repository and in the repositories you use with it.
+
 The installers:
 
 ```bash

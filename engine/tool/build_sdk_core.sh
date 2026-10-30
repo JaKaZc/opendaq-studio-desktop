@@ -2,7 +2,8 @@
 # Build the core of the openDAQ SDK for this computer, which the engine and
 # the optional function blocks module are compiled against:
 #
-#   build/openDAQ                        the SDK's source, at SDK_REF
+#   build/openDAQ                        the SDK's source, at the release in
+#                                        the repository's OPENDAQ_VERSION file
 #   build/sdk-<platform>-<machine>-install   its headers, CMake package and
 #                                        core libraries
 #
@@ -22,7 +23,8 @@ set -e
 
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
 SDK_SOURCE="${OPENDAQ_SOURCE:-https://github.com/openDAQ/openDAQ.git}"
-SDK_REF="${SDK_REF:-v3.40.3}"
+OPENDAQ_VERSION="${OPENDAQ_VERSION:-$(tr -d ' \r\n' < "$HERE/../OPENDAQ_VERSION")}"
+SDK_REF="${SDK_REF:-v$OPENDAQ_VERSION}"
 PLATFORM="$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)"
 BUILD="$HERE/build"
 CMAKE="${CMAKE:-cmake}"

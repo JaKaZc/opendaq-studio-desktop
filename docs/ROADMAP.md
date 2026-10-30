@@ -58,14 +58,20 @@ openDAQ Studio runs the SDK it was built with, 3.40.3. The SDK cannot be
 changed at run time. Upgrading it means building and shipping a new
 openDAQ Studio:
 
+- The file `OPENDAQ_VERSION` names the release, `3.40.3`. Upgrading means
+  changing it there, in this repository and in the three others.
 - `engine/tool/build_sdk_core.sh` builds the SDK core the engine is compiled
-  against, at `SDK_REF` (`v3.40.3`).
+  against, at that release.
 - `engine/tool/build_desktop.sh` and `build_windows.sh`
   download the openDAQ wheel whose libraries and modules the app ships, at
-  `SDK_VERSION` (`3.40.3`).
+  the same release.
 
-Both have to name the same release. The engine's README explains why the
-headers of one build and the libraries of the wheel match.
+The SDK core and the wheel must be one release, so both come from the one
+file, and `engine/tool/check_sdk_version.sh` stops the build when the core's
+headers and the wheel's metadata name different releases. The engine's README
+explains why the headers of one build and the libraries of the wheel match.
+The library names that carry the SDK's major version, such as
+`opendaq-64-3.dll`, follow the file too.
 
 Then run the engine's API tests (`make test`). They assert against the
 reference device's real property set, so an SDK change that alters it fails

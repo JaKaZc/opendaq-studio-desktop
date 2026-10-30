@@ -69,6 +69,12 @@ When the repository opendaq-universal-function-blocks is beside this one, or
 against the same SDK core and puts it into `dist/darwin-arm64/modules/`.
 Without it, the engine is built without the module.
 
+The openDAQ release is in the repository's `OPENDAQ_VERSION` file, `3.40.3`.
+The SDK core is built at it and the wheel is downloaded at it, and
+`tool/check_sdk_version.sh` stops the build when the core's headers and the
+wheel's metadata name different releases. The environment variable
+`OPENDAQ_VERSION` overrides the file for one build.
+
 The desktop app's build (`../scripts/build_desktop.py`) runs
 this script and packages `dist/darwin-arm64/` as `resources/engine/`.
 

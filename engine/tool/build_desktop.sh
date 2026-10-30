@@ -21,8 +21,10 @@
 # SDK's modules; without it, the app is built without it. CMAKE and NINJA name
 # the tools when they are not on the PATH.
 #
-# SDK_VERSION picks the openDAQ release (3.40.3); its macOS wheel is downloaded
-# once into build/. WHEEL_DIR points at an unpacked `opendaq` package instead.
+# The openDAQ release is in the repository's OPENDAQ_VERSION file. Its wheel
+# is downloaded once into build/; WHEEL_DIR points at an unpacked `opendaq`
+# package instead. tool/check_sdk_version.sh stops the build when the SDK
+# core and the wheel are not that one release.
 
 set -e
 
@@ -39,13 +41,17 @@ NINJA="${NINJA:-ninja}"
 for tool in "$CMAKE" "$NINJA" python3 npm; do
   command -v "$tool" > /dev/null 2>&1 || { echo "$tool is missing; see Requirements in README.md" >&2; exit 1; }
 done
-SDK_VERSION="${SDK_VERSION:-3.40.3}"
+# One release for everything: the SDK core is built at it and the wheel is
+# downloaded at it. It is in the repository's OPENDAQ_VERSION file; the
+# environment variable of that name overrides it.
+OPENDAQ_VERSION="${OPENDAQ_VERSION:-$(tr -d ' \r\n' < "$DESKTOP/OPENDAQ_VERSION")}"
+export OPENDAQ_VERSION
 
 "$HERE/tool/build_sdk_core.sh"
 if [ -z "$WHEEL_DIR" ]; then
   # The SDK's libraries and modules as openDAQ publishes them, in its wheel.
   WHEEL="$HERE/build/wheel-$PLATFORM"
-  if ! ls "$WHEEL"/opendaq-"$SDK_VERSION"-*.whl > /dev/null 2>&1; then
+  if ! ls "$WHEEL"/opendaq-"$OPENDAQ_VERSION"-*.whl > /dev/null 2>&1; then
     rm -rf "$WHEEL"
     # The libraries in the wheel are the same for every Python version.
     case "$PLATFORM" in
@@ -53,16 +59,17 @@ if [ -z "$WHEEL_DIR" ]; then
       *) WHEEL_TAGS="" ;;
     esac
     # shellcheck disable=SC2086
-    python3 -m pip download "opendaq==$SDK_VERSION" $WHEEL_TAGS --only-binary=:all: --no-deps -d "$WHEEL" -q
+    python3 -m pip download "opendaq==$OPENDAQ_VERSION" $WHEEL_TAGS --only-binary=:all: --no-deps -d "$WHEEL" -q
   fi
   rm -rf "$WHEEL/unpacked"
-  unzip -q -o "$WHEEL"/opendaq-*.whl 'opendaq/*' -d "$WHEEL/unpacked"
+  unzip -q -o "$WHEEL"/opendaq-*.whl 'opendaq/*' 'opendaq-*.dist-info/*' -d "$WHEEL/unpacked"
   WHEEL_DIR="$WHEEL/unpacked/opendaq"
 fi
 if [ ! -d "$WHEEL_DIR/modules" ]; then
   echo "No openDAQ package at $WHEEL_DIR" >&2
   exit 1
 fi
+"$HERE/tool/check_sdk_version.sh" "$SDK_INSTALL" "$WHEEL_DIR" "$OPENDAQ_VERSION"
 
 COMMON="-G Ninja -DCMAKE_MAKE_PROGRAM=$NINJA -DCMAKE_BUILD_TYPE=Release"
 if [ "$(uname -s)" = Darwin ]; then

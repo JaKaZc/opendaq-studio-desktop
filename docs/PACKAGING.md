@@ -116,13 +116,17 @@ has been built or tried.
 
 openDAQ discovers device, protocol and function block modules by scanning a
 directory at run time. The engine's build copies the SDK's modules from the
-openDAQ wheel into `engine/dist/<platform>/modules/`. It adds
-UniversalFunctionBlocksModule from the sibling repository
-opendaq-universal-function-blocks: the Universal renderer, which sends its plot
-as plot data that the UI draws, and the Level, Spectrum, Vibration, Sound
-level meter and Dashboard blocks. Studio needs the module to show and change
-the properties of these blocks on a phone, and it can add them to any device.
-The shell starts the engine with that folder as its module directory.
+openDAQ wheel into `engine/dist/<platform>/modules/`. When the sibling
+repository opendaq-universal-function-blocks is there, it builds and adds
+UniversalFunctionBlocksModule: the Universal renderer, which sends its plot as
+plot data that the UI draws, and the Level, Spectrum, Vibration, Sound level
+meter and Dashboard blocks. With the module, Studio can add these blocks to
+any device. Blocks that already run on a device, such as a phone, are
+configured through that device with or without it.
+Without the repository, the app is built without the module. Any other module
+built against the same SDK release can be put into that folder too, and the
+app ships it. The shell starts the engine with that folder as its module
+directory.
 
 If a packaged build starts but shows no device types, the modules are what
 went wrong. Check the Modules page, which lists what the SDK actually loaded.
@@ -226,10 +230,9 @@ for why the full wordmark is not used at icon sizes.
 ### Continuous integration
 
 `.github/workflows/ci.yml` type checks, lints, tests and builds the UI and
-type checks the desktop shell. The engine needs the openDAQ SDK and the
-sibling repository opendaq-universal-function-blocks, so the engine, its API
-tests and the installers are built and run on the Mac (`make engine`,
-`make test`, `make package`).
+type checks the desktop shell. The engine builds the openDAQ SDK core and
+needs the Xcode tools, so the engine, its API tests and the installers are
+built and run on the Mac (`make engine`, `make test`, `make package`).
 
 ## Versioning
 

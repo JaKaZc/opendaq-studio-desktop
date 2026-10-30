@@ -22,7 +22,6 @@ export function DetailPanel() {
   const info = useSession((state) => state.info);
   const refreshDetail = useSession((state) => state.refreshDetail);
 
-
   if (!selectedId) {
     return (
       <EmptyState
@@ -41,11 +40,7 @@ export function DetailPanel() {
         title="Could not load this component"
         message={error}
         action={
-          <button
-            type="button"
-            onClick={() => void refreshDetail()}
-            className="mt-1 text-[12px] text-accent underline"
-          >
+          <button type="button" onClick={() => void refreshDetail()} className="mt-1 text-[12px] text-accent underline">
             Try again
           </button>
         }
@@ -83,9 +78,7 @@ export function DetailPanel() {
   // purpose - change a setting and the reading it affects moves in view.
   return (
     <div className="relative min-h-0 flex-1 overflow-y-auto bg-surface">
-      {loading ? (
-        <div className="sticky top-0 z-10 h-0.5 w-full animate-pulse bg-brand" aria-hidden />
-      ) : null}
+      {loading ? <div className="sticky top-0 z-10 h-0.5 w-full animate-pulse bg-brand" aria-hidden /> : null}
       <div key={detail.node.id} className="mx-auto flex max-w-[1000px] flex-col gap-4 p-5">
         <BlockHeader detail={detail} readOnly={readOnly} />
 
@@ -103,11 +96,7 @@ export function DetailPanel() {
           componentId={detail.node.id}
           tree={detail.properties}
           readOnly={readOnly}
-          emptyHint={
-            detail.node.kind === 'inputPort'
-              ? 'Input ports are configured through the function block that owns them.'
-              : undefined
-          }
+          emptyHint={detail.node.kind === 'inputPort' ? 'Input ports are configured through the function block that owns them.' : undefined}
         />
 
         <InputPortsPanel ports={detail.inputPorts} readOnly={readOnly} />
@@ -117,23 +106,20 @@ export function DetailPanel() {
 }
 
 /**
- * Why a function block from the device is inert here.
+ * What a function block whose module only the device has can and cannot do.
  *
- * The device holds it, so it is shown - hiding it would make the tree disagree
- * with the hardware. But its module lives only on the device, so this viewer
- * cannot build the type: its properties do not come through and it cannot be
- * configured. Saying that is the difference between a limitation and a bug.
+ * The device runs the block and serves its signals, ports and properties, so
+ * it works and is configured from here as any other. Only adding more blocks
+ * of its type needs the module on this computer.
  */
 function MissingModuleNotice({ typeId }: { typeId: string }) {
   return (
-    <div className="flex items-start gap-2.5 rounded-[var(--radius-card)] border border-warn/40 bg-warn-soft px-4 py-3 text-[12px] leading-relaxed">
-      <PackageX size={13} className="mt-0.5 shrink-0 text-warn" aria-hidden />
+    <div className="flex items-start gap-2.5 rounded-[var(--radius-card)] border border-border bg-sunken px-4 py-3 text-[12px] leading-relaxed">
+      <PackageX size={13} className="mt-0.5 shrink-0 text-text-faint" aria-hidden />
       <div className="min-w-0">
-        <strong className="font-semibold">No module for {typeId}.</strong> The device provides this
-        function block, so it is listed with its signals and ports, but openDAQ Studio cannot build the
-        type, so its properties are unavailable and it cannot be configured from here. Add the
-        device's module with <code className="code-chip">--module-path</code> or{' '}
-        <strong>File → Load module…</strong>, then reconnect.
+        <strong className="font-semibold">{typeId} runs on the device.</strong> The device serves its signals, ports and properties, so it
+        is configured here as any other block. openDAQ Studio has no module for this type, so it cannot add more blocks of it. To add them,
+        load the module with <strong>File → Load module…</strong>.
       </div>
     </div>
   );

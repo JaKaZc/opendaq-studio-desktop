@@ -10,10 +10,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# The openDAQ engine (engine/) needs the openDAQ SDK and the sibling repository
-# opendaq-universal-function-blocks, so the engine, its API tests and the
-# installers are built and run on the Mac (make engine, make test,
-# make package).
+# The openDAQ engine (engine/) builds the openDAQ SDK core and needs the Xcode
+# tools, so the engine, its API tests and the installers are built and run on
+# the Mac (make engine, make test, make package).
 
 jobs:
   frontend:

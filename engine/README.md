@@ -43,6 +43,7 @@ time server on UDP 12300.
 | `node/addon.cpp` | The Node addon for the desktop app |
 | `tests/studio_cli.cpp` | A command line client, for tests and for checks under Wine |
 | `tool/build_desktop.sh` | Builds the engine for this computer into `dist/<platform>/` |
+| `tool/build_sdk_core.sh` | Clones and builds the openDAQ SDK core the engine is compiled against, in `build/` |
 | `tool/build_windows.sh` | Cross-builds the engine for Windows x64 into `dist/windows-x86_64/` |
 | `tool/serve.mjs` | A development server: the API over HTTP, live data and events over a WebSocket |
 | `tests/api/` | The API tests, against `tool/serve.mjs` |
@@ -57,13 +58,16 @@ tool/build_desktop.sh
 
 This builds the engine, its addon and `studio_cli` into
 `dist/darwin-arm64/`, next to the SDK's core libraries and modules. The
-engine is compiled against the headers of the SDK core that
-`tool/build_desktop.sh` of the sibling repository opendaq-universal-function-blocks
-builds at `v3.40.3`, and runs on the libraries of the openDAQ wheel of the
-same release, which the desktop app ships. Every SDK library exports plain C
-functions and the C++ API is header only above them, so the two match; the
-function blocks module is built the same way. `UNIVERSAL_FUNCTION_BLOCKS` names
-the module's folder when it is not beside this repository.
+engine is compiled against the SDK core that `tool/build_sdk_core.sh` clones
+and builds at `v3.40.3` in `build/`, and runs on the libraries of the openDAQ
+wheel of the same release, which the desktop app ships. Every SDK library
+exports plain C functions and the C++ API is header only above them, so the
+two match.
+
+When the repository opendaq-universal-function-blocks is beside this one, or
+`UNIVERSAL_FUNCTION_BLOCKS` names its folder, the script builds its module
+against the same SDK core and puts it into `dist/darwin-arm64/modules/`.
+Without it, the engine is built without the module.
 
 The desktop app's build (`../scripts/build_desktop.py`) runs
 this script and packages `dist/darwin-arm64/` as `resources/engine/`.

@@ -5,16 +5,17 @@
 #   studio_engine.dll           the engine
 #   studio_engine.node          its Node addon
 #   opendaq-64-3.dll ...        the SDK's core DLLs, from the openDAQ wheel
-#   modules/                    the SDK's modules, from the same wheel, and the
-#                               Universal renderer module, built here
+#   modules/                    the SDK's modules, from the same wheel, and
+#                               UniversalFunctionBlocksModule, built here when
+#                               opendaq-universal-function-blocks is there
 #   studio_cli.exe              a command line client, for checks under Wine
 #
 # Nothing of openDAQ's is compiled: its DLLs come from the win_amd64 wheel of
 # SDK_VERSION, and import libraries are made from their export tables
-# (tool/dll_def.py). Only this engine, its addon and the renderer module are
-# compiled, with clang-cl and lld-link against the Windows SDK and C runtime
-# that xwin downloads. The headers are those of the SDK core that
-# opendaq-universal-function-blocks/tool/build_desktop.sh builds on the Mac.
+# (tool/dll_def.py). Only this engine, its addon and the optional function
+# blocks module are compiled, with clang-cl and lld-link against the Windows
+# SDK and C runtime that xwin downloads. The headers are those of the SDK core
+# that tool/build_sdk_core.sh builds on the Mac.
 #
 #   engine/tool/build_windows.sh
 #
@@ -28,7 +29,7 @@ HERE="$(cd "$(dirname "$0")/.." && pwd)"
 DESKTOP="$(cd "$HERE/.." && pwd)"
 RENDERER="${UNIVERSAL_FUNCTION_BLOCKS:-$(cd "$DESKTOP/.." && pwd)/opendaq-universal-function-blocks}"
 SDK_VERSION="${SDK_VERSION:-3.40.3}"
-SDK_INSTALL="$RENDERER/build/sdk-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)-install"
+SDK_INSTALL="$HERE/build/sdk-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)-install"
 XWIN_DIR="${XWIN_DIR:-$HERE/build/xwin}"
 export XWIN_DIR
 BUILD="$HERE/build/windows-x86_64"
@@ -38,17 +39,13 @@ NINJA="${NINJA:-ninja}"
 for tool in "$CMAKE" "$NINJA" python3 npm; do
   command -v "$tool" > /dev/null 2>&1 || { echo "$tool is missing; see Requirements in README.md" >&2; exit 1; }
 done
-if [ ! -d "$RENDERER" ]; then
-  echo "No opendaq-universal-function-blocks at $RENDERER: clone it beside this repository, or set UNIVERSAL_FUNCTION_BLOCKS" >&2
-  exit 1
-fi
 DLLTOOL=/opt/homebrew/opt/llvm/bin/llvm-dlltool
 
 for tool in "$DLLTOOL" /opt/homebrew/opt/llvm/bin/clang-cl /opt/homebrew/opt/lld/bin/lld-link; do
   [ -x "$tool" ] || { echo "$tool is missing; brew install llvm lld" >&2; exit 1; }
 done
 [ -d "$XWIN_DIR/sdk" ] || { echo "No Windows SDK at $XWIN_DIR; run xwin splat (see above)" >&2; exit 1; }
-[ -d "$SDK_INSTALL/include/opendaq" ] || "$RENDERER/tool/build_desktop.sh"
+"$HERE/tool/build_sdk_core.sh"
 [ -d "$HERE/node/node_modules/node-addon-api" ] || npm --prefix "$HERE/node" install --no-audit --no-fund
 
 mkdir -p "$BUILD"
@@ -81,14 +78,20 @@ COMMON="-G Ninja -DCMAKE_MAKE_PROGRAM=$NINJA -DCMAKE_BUILD_TYPE=Release
 echo "== engine"
 # shellcheck disable=SC2086
 "$CMAKE" -S "$HERE" -B "$BUILD/engine" $COMMON \
-  -DRAPIDJSON_INCLUDE="$RENDERER/build/openDAQ/external/rapidjson/include" \
+  -DRAPIDJSON_INCLUDE="$HERE/build/openDAQ/external/rapidjson/include" \
   -DSTUDIO_ENGINE_TOOLS=ON -DSTUDIO_ENGINE_NODE=ON -DNODE_API_LIB="$BUILD/lib/node_api.lib" > "$BUILD/engine.configure.log"
 "$CMAKE" --build "$BUILD/engine"
 
-echo "== Universal renderer module"
-# shellcheck disable=SC2086
-"$CMAKE" -S "$RENDERER" -B "$BUILD/renderer" $COMMON > "$BUILD/renderer.configure.log"
-"$CMAKE" --build "$BUILD/renderer"
+BLOCKS=""
+if [ -f "$RENDERER/CMakeLists.txt" ]; then
+  echo "== function blocks module, from $RENDERER"
+  # shellcheck disable=SC2086
+  "$CMAKE" -S "$RENDERER" -B "$BUILD/renderer" $COMMON > "$BUILD/renderer.configure.log"
+  "$CMAKE" --build "$BUILD/renderer"
+  BLOCKS="$BUILD/renderer/universal_function_blocks_module.module.dll"
+else
+  echo "== function blocks module: none at $RENDERER, so the app is built without it"
+fi
 
 echo "== $DIST"
 rm -rf "$DIST"
@@ -96,6 +99,8 @@ mkdir -p "$DIST/modules"
 cp "$BUILD/engine/studio_engine.dll" "$BUILD/engine/studio_engine.node" "$BUILD/engine/studio_cli.exe" "$DIST/"
 cp "$BUILD"/sdk/opendaq/opendaq-64-3.dll "$BUILD"/sdk/opendaq/daqcore*.dll "$DIST/"
 cp "$BUILD"/sdk/opendaq/modules/* "$DIST/modules/"
-cp "$BUILD/renderer/universal_function_blocks_module.module.dll" "$DIST/modules/"
+if [ -n "$BLOCKS" ]; then
+  cp "$BLOCKS" "$DIST/modules/"
+fi
 python3 -I "$HERE/tool/pe_check.py" "$DIST"
 ls -l "$DIST" "$DIST/modules"

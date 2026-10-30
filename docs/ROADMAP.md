@@ -58,8 +58,8 @@ openDAQ Studio runs the SDK it was built with, 3.40.3. The SDK cannot be
 changed at run time. Upgrading it means building and shipping a new
 openDAQ Studio:
 
-- `opendaq-universal-function-blocks/tool/build_desktop.sh` builds the SDK core
-  the engine is compiled against, at `SDK_REF` (`v3.40.3`).
+- `engine/tool/build_sdk_core.sh` builds the SDK core the engine is compiled
+  against, at `SDK_REF` (`v3.40.3`).
 - `engine/tool/build_desktop.sh` and `build_windows.sh`
   download the openDAQ wheel whose libraries and modules the app ships, at
   `SDK_VERSION` (`3.40.3`).

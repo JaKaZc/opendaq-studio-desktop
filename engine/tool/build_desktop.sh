@@ -5,21 +5,21 @@
 #   libstudio_engine.*          the engine
 #   studio_engine.node          its Node addon, for the desktop app
 #   libopendaq-64-3.* ...       the SDK's core libraries, from the openDAQ wheel
-#   modules/                    the SDK's modules, from the same wheel, and the
-#                               Universal renderer module
+#   modules/                    the SDK's modules, from the same wheel, and
+#                               UniversalFunctionBlocksModule when it is there
 #   studio_cli                  a command line client, for tests
 #
-# The engine is compiled against the headers of the SDK core that
-# opendaq-universal-function-blocks/tool/build_desktop.sh builds at SDK_REF, and
-# runs on the libraries of the openDAQ wheel of the same release, the ones
-# the desktop app ships. The function blocks module shows that the two
-# match: it is built the same way and loads in the wheel's SDK.
+# The engine is compiled against the SDK core that tool/build_sdk_core.sh
+# builds at SDK_REF, and runs on the libraries of the openDAQ wheel of the
+# same release, the ones the desktop app ships.
 #
 #   engine/tool/build_desktop.sh
 #
-# opendaq-universal-function-blocks is expected beside this repository;
-# UNIVERSAL_FUNCTION_BLOCKS names another folder. CMAKE and NINJA name the tools
-# when they are not on the PATH.
+# The app needs no other repository. When opendaq-universal-function-blocks
+# is beside this repository, or UNIVERSAL_FUNCTION_BLOCKS names its folder,
+# the module is built here against the same SDK core and shipped with the
+# SDK's modules; without it, the app is built without it. CMAKE and NINJA name
+# the tools when they are not on the PATH.
 #
 # SDK_VERSION picks the openDAQ release (3.40.3); its macOS wheel is downloaded
 # once into build/. WHEEL_DIR points at an unpacked `opendaq` package instead.
@@ -30,7 +30,7 @@ HERE="$(cd "$(dirname "$0")/.." && pwd)"
 DESKTOP="$(cd "$HERE/.." && pwd)"
 RENDERER="${UNIVERSAL_FUNCTION_BLOCKS:-$(cd "$DESKTOP/.." && pwd)/opendaq-universal-function-blocks}"
 PLATFORM="$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)"
-SDK_INSTALL="$RENDERER/build/sdk-$PLATFORM-install"
+SDK_INSTALL="$HERE/build/sdk-$PLATFORM-install"
 BUILD="$HERE/build/$PLATFORM"
 DIST="$HERE/dist/$PLATFORM"
 mkdir -p "$HERE/build"
@@ -39,15 +39,9 @@ NINJA="${NINJA:-ninja}"
 for tool in "$CMAKE" "$NINJA" python3 npm; do
   command -v "$tool" > /dev/null 2>&1 || { echo "$tool is missing; see Requirements in README.md" >&2; exit 1; }
 done
-if [ ! -d "$RENDERER" ]; then
-  echo "No opendaq-universal-function-blocks at $RENDERER: clone it beside this repository, or set UNIVERSAL_FUNCTION_BLOCKS" >&2
-  exit 1
-fi
 SDK_VERSION="${SDK_VERSION:-3.40.3}"
 
-if [ ! -d "$SDK_INSTALL" ] || ! ls "$RENDERER/dist/$PLATFORM"/libuniversal_function_blocks_module.module.* > /dev/null 2>&1; then
-  "$RENDERER/tool/build_desktop.sh"
-fi
+"$HERE/tool/build_sdk_core.sh"
 if [ -z "$WHEEL_DIR" ]; then
   # The SDK's libraries and modules as openDAQ publishes them, in its wheel.
   WHEEL="$HERE/build/wheel-$PLATFORM"
@@ -78,7 +72,7 @@ fi
 # same flags, comes from the cache instead of the compiler.
 if command -v ccache > /dev/null 2>&1; then
   COMMON="$COMMON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-  export CCACHE_BASEDIR="$(cd "$DESKTOP/.." && pwd)"
+  export CCACHE_BASEDIR="$DESKTOP"
 fi
 
 if [ ! -d "$HERE/node/node_modules/node-addon-api" ]; then
@@ -88,9 +82,21 @@ fi
 echo "== engine"
 # shellcheck disable=SC2086
 "$CMAKE" -S "$HERE" -B "$BUILD" $COMMON -DCMAKE_PREFIX_PATH="$SDK_INSTALL" \
-  -DRAPIDJSON_INCLUDE="$RENDERER/build/openDAQ/external/rapidjson/include" \
+  -DRAPIDJSON_INCLUDE="$HERE/build/openDAQ/external/rapidjson/include" \
   -DSTUDIO_ENGINE_TOOLS=ON -DSTUDIO_ENGINE_NODE=ON > "$BUILD.configure.log"
 "$CMAKE" --build "$BUILD"
+
+BLOCKS=""
+if [ -f "$RENDERER/CMakeLists.txt" ]; then
+  echo "== function blocks module, from $RENDERER"
+  # shellcheck disable=SC2086
+  "$CMAKE" -S "$RENDERER" -B "$HERE/build/function-blocks-$PLATFORM" $COMMON \
+    -DCMAKE_PREFIX_PATH="$SDK_INSTALL" > "$HERE/build/function-blocks.configure.log"
+  "$CMAKE" --build "$HERE/build/function-blocks-$PLATFORM"
+  BLOCKS="$HERE/build/function-blocks-$PLATFORM"
+else
+  echo "== function blocks module: none at $RENDERER, so the app is built without it"
+fi
 
 echo "== $DIST"
 # A fresh folder each time: macOS kills a process that loads a library
@@ -104,7 +110,9 @@ for library in "$WHEEL_DIR"/libopendaq-*.* "$WHEEL_DIR"/libdaqcore*.*; do
   esac
 done
 cp "$WHEEL_DIR"/modules/* "$DIST/modules/"
-cp "$RENDERER/dist/$PLATFORM"/libuniversal_function_blocks_module.module.* "$DIST/modules/"
+if [ -n "$BLOCKS" ]; then
+  cp "$BLOCKS"/libuniversal_function_blocks_module.module.* "$DIST/modules/"
+fi
 
 if [ "$(uname -s)" = Darwin ]; then
   # Local symbols are a third of the SDK's size. Exported symbols stay, so

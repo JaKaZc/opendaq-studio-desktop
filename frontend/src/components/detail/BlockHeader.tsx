@@ -67,17 +67,14 @@ export function BlockHeader({ detail, readOnly }: { detail: ComponentDetail; rea
             {node.device && !node.device.connected ? <Badge tone="err">disconnected</Badge> : null}
             {node.functionBlock?.moduleAvailable === false ? (
               <Badge
-                tone="warn"
-                title={`openDAQ Studio has no module for ${node.functionBlock.typeId}, so it cannot be configured here`}
+                title={`The device runs ${node.functionBlock.typeId} and serves its properties; openDAQ Studio has no module for it, so it cannot add more blocks of this type`}
               >
-                module missing
+                remote module
               </Badge>
             ) : null}
             {!node.visible ? <Badge>hidden</Badge> : null}
           </div>
-          {node.description ? (
-            <p className="mt-1.5 max-w-2xl text-[12.5px] leading-snug text-text-muted">{node.description}</p>
-          ) : null}
+          {node.description ? <p className="mt-1.5 max-w-2xl text-[12.5px] leading-snug text-text-muted">{node.description}</p> : null}
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
@@ -160,9 +157,7 @@ export function BlockHeader({ detail, readOnly }: { detail: ComponentDetail; rea
             variant="ghost"
             icon={node.device?.locked ? <Unlock size={12} /> : <Lock size={12} />}
             disabled={readOnly}
-            onClick={() =>
-              node.device?.locked ? void actions.setLock(node.id, false) : void actions.setLock(node.id, true)
-            }
+            onClick={() => (node.device?.locked ? void actions.setLock(node.id, false) : void actions.setLock(node.id, true))}
           >
             {node.device?.locked ? 'Unlock' : 'Lock'}
           </Button>
@@ -213,9 +208,7 @@ export function BlockHeader({ detail, readOnly }: { detail: ComponentDetail; rea
 
       {node.updating ? (
         <div className="mt-3 flex items-center gap-2 rounded-[var(--radius-control)] bg-warn-soft px-3 py-2 text-[12px] text-warn">
-          <span className="flex-1">
-            An update block is open: property writes are collected and applied together when it is committed.
-          </span>
+          <span className="flex-1">An update block is open: property writes are collected and applied together when it is committed.</span>
           <Button size="sm" icon={<Play size={11} />} onClick={() => void actions.endUpdate(node.id)}>
             Commit now
           </Button>

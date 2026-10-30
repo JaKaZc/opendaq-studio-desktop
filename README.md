@@ -23,15 +23,16 @@ Device Server.
 
 ## The openDAQ phone projects
 
-This repository is one of four that work together. Clone them side by side
-into one folder, because the build scripts find each other there.
+This repository is one of four that work together, but each one stands on
+its own: take only the parts you need, and build your own around them.
+"Needs" says what a repository cannot do without.
 
 | Repository | What it is | Needs |
 |---|---|---|
-| opendaq-android-device-module | openDAQ module, **Android only**: the phone's sensors as one device, `android://` | openDAQ SDK, Android NDK |
-| opendaq-universal-function-blocks | openDAQ module, UniversalFunctionBlocksModule: Universal renderer, Level, Spectrum, Vibration, Sound level meter and Dashboard | openDAQ SDK |
-| opendaq-device-server | Android app that serves the phone as an openDAQ device on the network | both modules, Android 8 or newer, arm64 |
-| **opendaq-studio-desktop** (this one) | openDAQ Studio, the desktop client for macOS and Windows | the function blocks module |
+| [opendaq-android-device-module](https://github.com/JaKaZc/opendaq-android-device-module) | openDAQ module, **Android only**: the phone's sensors and state as one device, `android://` | The openDAQ SDK and the Android NDK |
+| [opendaq-universal-function-blocks](https://github.com/JaKaZc/opendaq-universal-function-blocks) | openDAQ module, UniversalFunctionBlocksModule: Universal renderer, Level, Spectrum, Vibration, Sound level meter and Dashboard, for any platform | The openDAQ SDK |
+| [opendaq-device-server](https://github.com/JaKaZc/opendaq-device-server) | Android app that serves the phone as an openDAQ device on the network | The Android device module. The function blocks module is optional |
+| **opendaq-studio-desktop** (this one) | openDAQ Studio, the desktop client for macOS and Windows, for any openDAQ device | Nothing else. The function blocks module is optional |
 
 ```
  Android phone: opendaq-device-server                 Computer: this app
@@ -46,15 +47,46 @@ into one folder, because the build scripts find each other there.
  └──────────────────────────────────────────┘         └──────────────────────────────────────────┘
 ```
 
-Studio ships UniversalFunctionBlocksModule because an openDAQ client can show and
-change a remote function block's properties only when it has the block's
-module itself. With it, Studio configures the phone's function blocks, draws
-the Universal renderer's plot data, and can add the same blocks to any
-device. Studio needs no phone to be useful: it works with any openDAQ device.
+Studio ships UniversalFunctionBlocksModule when it is built beside it, so it
+can add the same blocks to the devices it runs itself. It configures the
+phone's blocks with or without the module, because the phone serves their
+signals, ports and properties.
 
 All four repositories are built against the same openDAQ SDK release,
 **v3.40.3**. openDAQ's native protocol does not connect a client of one
 release to a server of another.
+
+## Use only what you need
+
+openDAQ Studio needs none of the other repositories, neither to build nor to
+run. It is a client for any openDAQ device: the SDK's simulated reference
+devices, measurement hardware with openDAQ support, or a phone that runs the
+Device Server. Clone this repository alone and follow Building below.
+
+- **Without the function blocks module.** When
+  [opendaq-universal-function-blocks](https://github.com/JaKaZc/opendaq-universal-function-blocks)
+  is not beside this repository, the app is built without it and everything
+  else works the same. The blocks of that module on a remote device, such as
+  a phone, still work and are configured as any other, because the device
+  serves their signals, ports and properties, and Studio draws the Universal
+  renderer's plot data itself. Only adding new blocks of these types needs
+  the module on the computer; **File, Load module…** loads it later.
+- **With your own modules.** Studio needs no code for a device or function
+  block type: it shows whatever the loaded modules provide. Your own
+  device module or function blocks therefore appear in Add, in the function
+  blocks the Signals page offers and on the Modules page, with all their
+  properties. Load a module while the app runs with **File, Load module…**,
+  or put it into `engine/dist/<platform>/modules/` before packaging, and the
+  app ships it. Build it against openDAQ SDK 3.40.3, the release Studio
+  ships.
+- **With your own user interface or program.** The engine in `engine/` is a
+  C library with a JSON interface, `engine/include/studio_engine.h`, whose
+  routes [docs/API.md](docs/API.md) documents. Another user interface, a
+  script or a test can drive the same openDAQ instance through it.
+  `engine/tool/serve.mjs` serves it over HTTP and a WebSocket for that.
+- **Without Studio.** A phone that runs the Device Server, and any other
+  openDAQ device, also works with openDAQ's own clients, such as a Python or
+  C++ program with the openDAQ SDK.
 
 ## What it shows
 
@@ -132,8 +164,8 @@ To build and run from source:
 | CMake | 3.24 or newer | `brew install cmake` |
 | Ninja | | `brew install ninja` |
 | git | | To clone the openDAQ SDK |
-| opendaq-universal-function-blocks | | Cloned beside this repository, or named by `UNIVERSAL_FUNCTION_BLOCKS` |
 | Network access | | On the first build, for the SDK, its dependencies, the openDAQ wheel and npm |
+| opendaq-universal-function-blocks | optional | Cloned beside this repository, or named by `UNIVERSAL_FUNCTION_BLOCKS`, to ship its function blocks with the app |
 | ccache | optional | Used when installed; repeated builds are much faster |
 
 For the Windows installer, also `brew install llvm lld xwin makensis`, and the
@@ -145,10 +177,16 @@ signals.
 
 ## Building
 
+```bash
+git clone https://github.com/JaKaZc/opendaq-studio-desktop.git
+cd opendaq-studio-desktop
 ```
- any-folder/
-   opendaq-universal-function-blocks/
-   opendaq-studio-desktop/          <- build here
+
+To ship the function blocks with the app, clone their repository beside this
+one first. This is optional:
+
+```bash
+git clone https://github.com/JaKaZc/opendaq-universal-function-blocks.git ../opendaq-universal-function-blocks
 ```
 
 ```bash
@@ -159,14 +197,16 @@ make desktop    # builds the UI and starts the app from source
 
 `make engine` runs `engine/tool/build_desktop.sh`, which:
 
-1. builds the function blocks module and the openDAQ SDK core at `v3.40.3` in
-   opendaq-universal-function-blocks, when they are not built yet (a few minutes
-   the first time),
+1. clones the openDAQ SDK at `v3.40.3` into `engine/build/openDAQ` and builds
+   its core, which the engine is compiled against (`engine/tool/build_sdk_core.sh`,
+   a few minutes the first time),
 2. downloads the openDAQ wheel of the same release and takes the SDK's
    libraries and modules from it,
 3. compiles the engine, its Node addon and `studio_cli` against the SDK core,
-4. puts everything into `engine/dist/darwin-arm64/`, with the function blocks
-   module in its `modules/` folder.
+4. builds UniversalFunctionBlocksModule when its repository is there, and
+   skips it when it is not,
+5. puts everything into `engine/dist/darwin-arm64/`, with the modules in its
+   `modules/` folder.
 
 The installers:
 

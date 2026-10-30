@@ -8,10 +8,11 @@ The README's Requirements section lists the tools. In short:
 - Node.js 20 or newer, and Python 3 for the build script and the engine's API
   tests.
 - The Xcode command line tools, CMake 3.24 or newer and Ninja for the engine.
-- The repository opendaq-universal-function-blocks beside this one. Its
-  `tool/build_desktop.sh` clones the openDAQ SDK at `v3.40.3` and builds the
-  SDK core that the engine is compiled against. The engine's build downloads
-  the openDAQ wheel whose libraries and modules the app ships.
+- Nothing else: the engine's build clones the openDAQ SDK at `v3.40.3`,
+  builds the SDK core that the engine is compiled against, and downloads the
+  openDAQ wheel whose libraries and modules the app ships. The repository
+  opendaq-universal-function-blocks beside this one is optional; when it is
+  there, its module is built and shipped too.
 - No hardware. The SDK ships reference devices that generate real signals.
 
 ## Getting started
@@ -22,9 +23,9 @@ make engine     # the engine, the SDK and its modules -> engine/dist/darwin-arm6
 make desktop    # builds the UI and the shell and starts the app from source
 ```
 
-`make engine` runs `engine/tool/build_desktop.sh`. The first run also builds
-the function blocks module and the SDK core, in opendaq-universal-function-blocks,
-when they are missing. Run it again after every change to the engine.
+`make engine` runs `engine/tool/build_desktop.sh`. The first run also clones
+and builds the SDK core in `engine/build/`, which takes a few minutes. Run it
+again after every change to the engine.
 
 `make help` lists every target. Each one is a thin wrapper around the
 underlying tool, so the commands in the `Makefile` work without make.

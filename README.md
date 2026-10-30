@@ -134,10 +134,12 @@ Across every mode:
 
 ## Installing
 
-Download the installer for your platform from the repository's Releases, run
-it and open the app. It bundles the openDAQ engine, the openDAQ SDK with its
-device modules, UniversalFunctionBlocksModule and the UI. There is nothing to
-install first and nothing to configure.
+Download the package for your platform from the
+[Releases](https://github.com/JaKaZc/opendaq-studio-desktop/releases), run it and open the app. It
+bundles the openDAQ engine, the openDAQ SDK with its device modules,
+UniversalFunctionBlocksModule and the UI. On macOS there is nothing to
+install first and nothing to configure. Windows needs the Visual C++ runtime;
+see below.
 
 | Platform | Package | Notes |
 |---|---|---|
@@ -146,10 +148,93 @@ install first and nothing to configure.
 | Windows x64 | `openDAQ Studio-1.0.0-Setup.exe` | Per user, so no administrator rights |
 | Windows x64, portable | `openDAQ Studio-1.0.0-Setup.zip` | Unzip and run; nothing is installed |
 
-The Windows installer is cross-built on a Mac and has not been tried on a
-Windows PC yet. It needs the Visual C++ runtime, which the installer does not
-carry yet: a PC without the Visual C++ Redistributable cannot start the
-engine. Linux packaging is configured but has not been built or tried.
+Linux packaging is configured but has not been built or tried.
+
+### Windows needs the Visual C++ Redistributable
+
+openDAQ Studio's engine and the openDAQ SDK are built with Microsoft's C++
+compiler and use its runtime libraries (`MSVCP140.dll`, `VCRUNTIME140.dll`
+and `VCRUNTIME140_1.dll`). The installer and the portable ZIP do not carry
+them. Install the **Microsoft Visual C++ Redistributable for Visual Studio
+2015 to 2022, x64** once, before the first start:
+
+- Download it from Microsoft:
+  [vc_redist.x64.exe](https://aka.ms/vs/17/release/vc_redist.x64.exe), or see
+  [the latest supported Visual C++ Redistributable downloads](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist).
+- Or install it from a terminal: `winget install Microsoft.VCRedist.2015+.x64`.
+
+Many PCs have it already, because other programs install it too. Without it,
+the engine cannot load: Studio shows "openDAQ Studio could not start" with
+"The openDAQ engine did not start" and quits. Install the Redistributable and
+start Studio again.
+
+### What to expect on the first start
+
+The releases are not signed with certificates that macOS and Windows trust
+by default, because those cost a yearly fee. Your system therefore asks you
+once to confirm that you want to open the app. The checksums under How
+releases are made let you check that a download is the one published here.
+
+**macOS.** The app is signed with the project's own self-signed certificate
+and is not notarized by Apple, because notarizing needs a paid Apple
+Developer ID. The first time you open it, macOS says it cannot verify that
+the app is free of malware and does not open it:
+
+1. Drag openDAQ Studio from the DMG to Applications and open it once.
+2. Open **System Settings, Privacy & Security**, scroll to Security and click
+   **Open Anyway** next to the message about openDAQ Studio, then confirm.
+
+Or remove the download's quarantine flag in a terminal, which has the same
+effect:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/openDAQ Studio.app"
+```
+
+macOS remembers the choice, so later starts open directly. When Studio first
+looks for devices, macOS also asks whether it may find devices on the local
+network. Allow it, or Studio finds and reaches no device on the network. The
+setting is in System Settings, Privacy & Security, Local Network.
+
+**Windows.** The installer and the app have no code signature, because that
+needs a paid code signing certificate. Microsoft Defender SmartScreen
+therefore shows "Windows protected your PC" when you run the installer:
+
+1. Click **More info**.
+2. Click **Run anyway**.
+
+The installer installs for your user only and needs no administrator rights.
+When Studio starts, Windows Defender Firewall may ask whether it may use the
+network. Allow it on private networks, or Studio cannot discover devices or
+answer their time requests.
+
+### How releases are made
+
+Every release is built on a Mac from this repository's sources, with the
+commands in Building below:
+
+| Package | Built with | Signed |
+|---|---|---|
+| macOS DMG and ZIP | `python3 scripts/build_desktop.py --release` | With the self-signed certificate "openDAQ Studio Local", not notarized |
+| Windows installer and ZIP | `python3 scripts/build_desktop.py --windows --release`, cross-built with clang-cl | Not signed |
+
+Both bundle openDAQ SDK 3.40.3, from the official openDAQ wheels, and the
+function blocks module built from
+[opendaq-universal-function-blocks](https://github.com/JaKaZc/opendaq-universal-function-blocks)
+at the same time. Each release lists the SHA-256 checksum of every file in
+`SHA256SUMS.txt`. Check a download against it before you open it:
+
+```bash
+shasum -a 256 -c SHA256SUMS.txt --ignore-missing
+```
+
+```powershell
+Get-FileHash ".\openDAQ Studio-1.0.0-Setup.exe" -Algorithm SHA256
+```
+
+The Windows packages are cross-built on a Mac and have not been tried on a
+Windows PC yet, so treat them as a preview and report what you find in the
+repository's issues.
 
 ## Requirements
 
@@ -281,7 +366,7 @@ reasoning behind them.
   and ships. `GET /api/system/diagnostics` reports it under `sdk.version`.
 - **macOS** on Apple silicon. The engine and the SDK's modules are native
   libraries of one architecture and the installer carries the `arm64` build.
-- **Windows** x64, with the Visual C++ runtime installed.
+- **Windows** x64, with the Microsoft Visual C++ Redistributable (x64) installed; see [Windows needs the Visual C++ Redistributable](#windows-needs-the-visual-c-redistributable).
 
 The UI refuses to interpret sample frames of a different frame version and
 reports the mismatch rather than drawing wrong data.

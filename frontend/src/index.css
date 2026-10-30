@@ -1,0 +1,580 @@
+@import 'tailwindcss';
+
+/* Official typefaces, bundled rather than fetched from a CDN: measurement PCs
+   are frequently offline, and a viewer that loses its typography when the
+   network is down is not acceptable in a control room.
+   Roboto is the primary face; Montserrat Light is the secondary face the manual
+   reserves for taglines set with the logo. */
+@import '@fontsource/roboto/latin-300.css';
+@import '@fontsource/roboto/latin-400.css';
+@import '@fontsource/roboto/latin-500.css';
+@import '@fontsource/roboto/latin-700.css';
+@import '@fontsource/montserrat/latin-300.css';
+
+/*
+ * openDAQ Studio design system
+ * ================================
+ * Colours, typography and the gradient follow the openDAQ Design Manual v1.0.
+ *
+ *   HBK Dark Blue     #00335A   PANTONE 540C    RAL 5001
+ *   DEWESoft Orange   #F15D31   PANTONE 1655C   RAL 2004
+ *   openDAQ Graphite  #424242   PANTONE 440 C
+ *   Secondary tints   #D4F5FA (642 C) · #FADED3 (705 C) · #D3FAE6 (621 C)
+ *
+ * Everything the UI paints goes through a *semantic* token
+ * (`--color-surface`, `--color-text-muted`, ...) rather than a raw brand
+ * colour, so a component is written once and is correct in both themes.
+ */
+
+/* Theme is an explicit choice stored on <html data-theme>; "system" leaves the
+   attribute off and lets prefers-color-scheme decide.
+   The variant has to cover both, or a `dark:` utility would disagree with the
+   tokens - which matters for the logo, since the manual permits the coloured
+   version only on a white background. */
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *) {
+      @slot;
+    }
+  }
+}
+
+@theme {
+  /* --- brand, per the Design Manual ------------------------------------- */
+  /* Primary. Used in the logo, second-level headlines, highlighted text and
+     the standard background gradient. */
+  --color-hbk-blue: #00335a;
+  --color-dewesoft-orange: #f15d31;
+  /* Secondary. Font colours, markings and symbols. */
+  --color-opendaq-graphite: #424242;
+  --color-opendaq-cyan: #d4f5fa;
+  --color-opendaq-peach: #faded3;
+  --color-opendaq-mint: #d3fae6;
+
+  /* Tints and shades derived from the two primaries, for states the manual
+     does not legislate (hover, focus, disabled). */
+  --color-brand-navy: #00335a;
+  --color-brand-navy-700: #002540;
+  --color-brand-navy-600: #0a4576;
+  --color-brand-navy-400: #2f6fa3;
+  --color-brand-navy-200: #7fb2e5;
+  --color-brand-orange: #f15d31;
+  --color-brand-orange-600: #d84a20;
+  --color-brand-orange-300: #ff8a63;
+
+  /* --- semantic: light (default) ---------------------------------------- */
+  --color-surface: #eef2f6;
+  --color-panel: #ffffff;
+  --color-elevated: #ffffff;
+  --color-sunken: #f3f6f9;
+  --color-border: #e1e7ee;
+  --color-border-strong: #c9d3dd;
+  /* A hairline of light along a panel's top edge: depth without a darker border. */
+  --color-edge-light: rgb(255 255 255 / 0.9);
+  /* The manual sets body copy in openDAQ Graphite. */
+  --color-text: #424242;
+  --color-text-muted: #6b6b6b;
+  --color-text-faint: #949494;
+  --color-accent: #00335a;
+  /* openDAQ cyan, the manual's secondary tint. */
+  --color-accent-soft: #d4f5fa;
+  --color-brand: #f15d31;
+  /* The brand's lightest step: a meter's track, a channel node's fill. */
+  --color-brand-soft: #fde4da;
+  --color-brand-contrast: #ffffff;
+  --color-focus: #2f6fa3;
+
+  /* Status colours. The soft backgrounds are the manual's secondary tints -
+     mint, peach and cyan - which is what it reserves them for. Error has no
+     tint in the palette, so it derives one from the same lightness. */
+  --color-ok: #1a7f4b;
+  --color-ok-soft: #d3fae6;
+  --color-warn: #9a5b00;
+  --color-warn-soft: #faded3;
+  --color-err: #c02e26;
+  --color-err-soft: #fadada;
+  --color-info: #00335a;
+  --color-info-soft: #d4f5fa;
+
+  /* Plot ink, tuned for a white plot background. */
+  --color-plot-bg: #ffffff;
+  --color-plot-grid: #edf1f5;
+  --color-plot-axis: #a9b6c2;
+  --color-plot-text: #56687a;
+  --color-plot-cursor: #00335a;
+
+  /* --- typography & shape ---------------------------------------------- */
+  /* Roboto is the manual's primary typeface. The system stack behind it is a
+     fallback for the moment before the bundled font decodes. */
+  --font-sans:
+    'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  /* Reserved by the manual for taglines and claims set with the logo. */
+  --font-display: 'Montserrat', 'Roboto', sans-serif;
+  --font-mono:
+    ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, 'Cascadia Mono', 'Roboto Mono',
+    monospace;
+
+  --radius-panel: 12px;
+  --radius-control: 8px;
+  --radius-card: 14px;
+
+  /* --- motion ------------------------------------------------------------ */
+  /* One curve for everything that arrives: quick out of the gate, soft landing.
+     Durations are short on purpose - motion here explains a change, it is not
+     something to wait for. All of it is switched off under reduced motion. */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 420ms;
+
+  /* The manual's core graphic element: HBK Dark Blue to DEWESoft Orange, at
+     45 degrees, distributed 60/40 so the angle reads as balanced. */
+  --gradient-brand: linear-gradient(45deg, #00335a 0%, #00335a 45%, #f15d31 95%, #f15d31 100%);
+
+  --shadow-panel: 0 1px 2px rgb(15 29 42 / 0.05), 0 4px 16px -6px rgb(15 29 42 / 0.08);
+  --shadow-card: 0 1px 2px rgb(15 29 42 / 0.04), 0 8px 24px -18px rgb(15 29 42 / 0.14);
+  --shadow-popover: 0 16px 40px -10px rgb(15 29 42 / 0.26), 0 2px 8px rgb(15 29 42 / 0.1);
+  /* The brand, as light: a wash behind a hero, never behind data. */
+  --glow-brand:
+    radial-gradient(60% 120% at 0% 0%, rgb(0 51 90 / 0.10), transparent 70%),
+    radial-gradient(50% 120% at 100% 0%, rgb(241 93 49 / 0.10), transparent 70%);
+}
+
+/* Node categories in the visual editor - referenced only through var() in
+   inline styles, so they live outside @theme, which Tailwind trims to what
+   utilities use. Distinct enough to tell a filter from a statistic at a
+   glance; drawn from the brand where the brand has a colour. */
+:root {
+  --color-node-signal: #00335a;
+  --color-node-generate: #f15d31;
+  --color-node-math: #2f6fa3;
+  --color-node-filter: #6d4fc2;
+  --color-node-statistics: #1a7f4b;
+  --color-node-logic: #9a5b00;
+}
+
+/* --- semantic: dark ----------------------------------------------------- */
+/* A navy-tinted dark scheme rather than neutral grey, so the brand still reads.
+   Declared for both the explicit toggle and the system preference. */
+@layer base {
+  :root[data-theme='dark'],
+  :root:not([data-theme='light']) {
+    @media (prefers-color-scheme: dark) {
+      --color-surface: #060c12;
+      --color-panel: #0c1620;
+      --color-elevated: #122130;
+      --color-sunken: #08111a;
+      --color-border: #172532;
+      --color-border-strong: #263a4a;
+      --color-edge-light: rgb(255 255 255 / 0.045);
+      --color-text: #e8f0f7;
+      --color-text-muted: #93a7b8;
+      --color-text-faint: #62788a;
+      --color-accent: #7fb2e5;
+      --color-accent-soft: #0f2437;
+      --color-brand: #ff7048;
+      --color-brand-soft: #33180f;
+      --color-brand-contrast: #16110e;
+      --color-focus: #7fb2e5;
+
+      --color-ok: #4ec98a;
+      --color-ok-soft: #0c271b;
+      --color-warn: #e5a53c;
+      --color-warn-soft: #2a200f;
+      --color-err: #ff6f61;
+      --color-err-soft: #311513;
+      --color-info: #7fb2e5;
+      --color-info-soft: #0f2437;
+
+      --color-plot-bg: #08111a;
+      --color-plot-grid: #15222e;
+      --color-plot-axis: #34495a;
+      --color-plot-text: #8aa0b2;
+      --color-plot-cursor: #7fb2e5;
+
+
+      --color-node-signal: #7fb2e5;
+      --color-node-generate: #ff8a63;
+      --color-node-math: #6fb6ff;
+      --color-node-filter: #a78bfa;
+      --color-node-statistics: #4ec98a;
+      --color-node-logic: #e5a53c;
+
+      --shadow-panel: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+      --shadow-card: 0 1px 2px rgb(0 0 0 / 0.5), 0 18px 40px -16px rgb(0 0 0 / 0.75);
+      --shadow-popover: 0 18px 44px -10px rgb(0 0 0 / 0.75), 0 2px 10px rgb(0 0 0 / 0.5);
+      --glow-brand:
+        radial-gradient(60% 140% at 0% 0%, rgb(47 111 163 / 0.22), transparent 70%),
+        radial-gradient(50% 140% at 100% 0%, rgb(255 112 72 / 0.14), transparent 70%);
+    }
+  }
+
+  /* The explicit dark choice must win regardless of the system preference, so
+     the same values are declared again outside the media query. */
+  :root[data-theme='dark'] {
+    --color-surface: #060c12;
+    --color-panel: #0c1620;
+    --color-elevated: #122130;
+    --color-sunken: #08111a;
+    --color-border: #172532;
+    --color-border-strong: #263a4a;
+    --color-edge-light: rgb(255 255 255 / 0.045);
+    --color-text: #e8f0f7;
+    --color-text-muted: #93a7b8;
+    --color-text-faint: #62788a;
+    --color-accent: #7fb2e5;
+    --color-accent-soft: #0f2437;
+    --color-brand: #ff7048;
+    --color-brand-soft: #33180f;
+    --color-brand-contrast: #16110e;
+    --color-focus: #7fb2e5;
+
+    --color-ok: #4ec98a;
+    --color-ok-soft: #0c271b;
+    --color-warn: #e5a53c;
+    --color-warn-soft: #2a200f;
+    --color-err: #ff6f61;
+    --color-err-soft: #311513;
+    --color-info: #7fb2e5;
+    --color-info-soft: #0f2437;
+
+    --color-plot-bg: #08111a;
+    --color-plot-grid: #15222e;
+    --color-plot-axis: #34495a;
+    --color-plot-text: #8aa0b2;
+    --color-plot-cursor: #7fb2e5;
+
+
+    --color-node-signal: #7fb2e5;
+    --color-node-generate: #ff8a63;
+    --color-node-math: #6fb6ff;
+    --color-node-filter: #a78bfa;
+    --color-node-statistics: #4ec98a;
+    --color-node-logic: #e5a53c;
+
+    --shadow-panel: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.5), 0 18px 40px -16px rgb(0 0 0 / 0.75);
+    --shadow-popover: 0 18px 44px -10px rgb(0 0 0 / 0.75), 0 2px 10px rgb(0 0 0 / 0.5);
+    --glow-brand:
+      radial-gradient(60% 140% at 0% 0%, rgb(47 111 163 / 0.22), transparent 70%),
+      radial-gradient(50% 140% at 100% 0%, rgb(255 112 72 / 0.14), transparent 70%);
+  }
+}
+
+/* --- base --------------------------------------------------------------- */
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior: none;
+  }
+
+  /* A visible focus ring everywhere, since this UI is meant to be keyboard
+     driven; :focus-visible keeps it off mouse clicks. */
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 1px;
+    border-radius: 3px;
+  }
+
+  /* The manual sets headlines in Roboto Light. At UI sizes that is too thin to
+     stay legible, so headings use Medium and only the largest use Light. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  h1 {
+    font-weight: 300;
+  }
+
+  /* Slim scrollbars so dense panels do not lose 15px to chrome. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-border-strong);
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-text-faint);
+  }
+
+  /* Number inputs in this UI are edited by typing, not by nudging. */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* --- reusable pieces ---------------------------------------------------- */
+
+@layer components {
+  .panel {
+    background-color: var(--color-panel);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-panel), inset 0 1px 0 var(--color-edge-light);
+  }
+
+  /* A card lifts off the canvas: a softer, deeper shadow than a panel, and a
+     hover that answers the pointer, because every card in this UI is a door. */
+  .card {
+    background-color: var(--color-panel);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card), inset 0 1px 0 var(--color-edge-light);
+    transition:
+      border-color var(--duration-base) var(--ease-out),
+      transform var(--duration-base) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out);
+  }
+
+  .card-interactive:hover {
+    border-color: var(--color-border-strong);
+    transform: translateY(-1px);
+  }
+
+  /* The large numbers a screen leads with: Roboto Light, the manual's own
+     headline weight, with proportional figures - tabular digits make a big
+     standalone number look loose. */
+  .kpi-number {
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-variant-numeric: proportional-nums;
+  }
+
+  /* Section header used above property grids, signal lists and port lists. */
+  .section-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.625rem;
+    background-color: var(--color-sunken);
+    border-bottom: 1px solid var(--color-border);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+  }
+
+  /* Rows in the tree and grids: full-width hit target, subtle hover. */
+  .row-hover {
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .row-hover:hover {
+    background-color: color-mix(in oklab, var(--color-accent) 7%, transparent);
+  }
+
+  .row-selected {
+    background-color: color-mix(in oklab, var(--color-accent) 14%, transparent);
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--color-border) 60%, transparent) 25%,
+      color-mix(in oklab, var(--color-border) 100%, transparent) 37%,
+      color-mix(in oklab, var(--color-border) 60%, transparent) 63%
+    );
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+    border-radius: 4px;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0 50%;
+    }
+  }
+
+  /* --- motion ---------------------------------------------------------- */
+
+  /* How anything arrives: a short rise and fade. Lists stagger it by setting
+     --enter-delay per item, so a page assembles instead of popping in. */
+  .animate-enter {
+    animation: enter var(--duration-slow) var(--ease-out) both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* A workspace switch: a quicker, flatter version, so moving around feels
+     immediate rather than theatrical. */
+  .animate-workspace {
+    animation: workspace-in var(--duration-base) var(--ease-out) both;
+  }
+
+  @keyframes workspace-in {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Something that is live: a steady dot with a ring breathing out of it. The
+     ring, not the dot, moves - the state stays readable in any frame. */
+  .live-dot {
+    position: relative;
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    background-color: currentColor;
+    flex-shrink: 0;
+  }
+
+  .live-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: currentColor;
+    animation: live-ring 2s var(--ease-out) infinite;
+  }
+
+  @keyframes live-ring {
+    from {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    to {
+      transform: scale(2.8);
+      opacity: 0;
+    }
+  }
+
+  /* Samples moving along a connection in the topology diagram. The dash
+     pattern travels; its speed is constant so it reads as flow, not urgency. */
+  .flow-edge {
+    stroke-dasharray: 3 7;
+    animation: flow 900ms linear infinite;
+  }
+
+  @keyframes flow {
+    to {
+      stroke-dashoffset: -10;
+    }
+  }
+}
+
+/* --- utilities ---------------------------------------------------------- */
+
+@layer components {
+  /* The 60/40, 45-degree brand gradient. Used sparingly - the top bar accent and
+     the start-up screen - so it stays an accent rather than decoration. */
+  .brand-gradient {
+    background-image: var(--gradient-brand);
+  }
+
+  /* The brand as light behind a hero. Never behind data. */
+  .brand-glow {
+    background-image: var(--glow-brand);
+  }
+
+  /* Text highlight: the manual sets this in DEWESoft Orange. */
+  .text-highlight {
+    color: var(--color-brand);
+    font-weight: 500;
+  }
+
+  /* A file name, flag or symbol inside a sentence. */
+  .code-chip {
+    padding: 0 0.25rem;
+    border-radius: 3px;
+    background-color: var(--color-sunken);
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    white-space: nowrap;
+  }
+}
+
+@layer utilities {
+  /* Wide content (tables, plots, code) scrolls inside its own box; the page
+     itself must never scroll horizontally. */
+  .scroll-x {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  .grid-cols-prop {
+    grid-template-columns: minmax(9rem, 1.4fr) minmax(6rem, 1fr) auto;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}

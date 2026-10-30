@@ -1,0 +1,22 @@
+# Python, for the build and icon scripts and the engine's API tests
+__pycache__/
+.venv*/
+.pytest_cache/
+
+# Node
+node_modules/
+frontend/dist/
+desktop/dist/
+desktop/release/
+
+# Build output. desktop/build/ is not output: it holds the icons and the
+# installer artwork.
+/build/
+engine/build/
+dist/
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

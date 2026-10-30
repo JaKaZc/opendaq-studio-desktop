@@ -1,0 +1,12 @@
+{
+  "name": "studio-engine-node",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Headers for building the openDAQ Studio engine's Node addon",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "node-addon-api": "^8.3.1",
+    "node-api-headers": "^1.5.0",
+    "ws": "^8.18.3"
+  }
+}

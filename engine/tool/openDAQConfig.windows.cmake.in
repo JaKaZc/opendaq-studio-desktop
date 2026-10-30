@@ -1,0 +1,20 @@
+# The openDAQ SDK for a Windows cross build, written by tool/build_windows.sh.
+#
+# The headers are the SDK core's of the same release, which are the same on
+# every platform. The libraries are the DLLs of the openDAQ win_amd64 wheel,
+# reached through import libraries made from their export tables: every
+# function they export is a plain C function, and the C++ API is header only
+# above them. These definitions are the ones the SDK's own CMake targets carry.
+
+set(_sdk_include "@SDK_INCLUDE@")
+set(_sdk_lib "@SDK_LIB@")
+
+add_library(daq::opendaq INTERFACE IMPORTED)
+set_target_properties(daq::opendaq PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${_sdk_include}"
+    INTERFACE_COMPILE_DEFINITIONS "OPENDAQ_ENABLE_PARAMETER_VALIDATION;OPENDAQ_THREAD_SAFE;OPENDAQ_SKIP_LIB_LINK;OPENDAQ_ENABLE_ACCESS_CONTROL;OPENDAQ_LINKS_CORE_OBJECTS;OPENDAQ_LINKS_OPENDAQ;FMT_HEADER_ONLY=1;ONLY_C_LOCALE=0;HAS_STRING_VIEW=1;XXH_INLINE_ALL"
+    INTERFACE_COMPILE_FEATURES "cxx_std_17"
+    INTERFACE_LINK_LIBRARIES "${_sdk_lib}/opendaq-64-3.lib;${_sdk_lib}/daqcoreobjects-64-3.lib;${_sdk_lib}/daqcoretypes-64-3.lib"
+)
+
+set(openDAQ_FOUND TRUE)

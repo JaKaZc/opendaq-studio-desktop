@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Apply the stored theme before the first paint. Light is the default;
+      // without this a dark operating system would show the dark theme for a
+      // moment while the application loads.
+      (function () {
+        var theme = 'light';
+        try {
+          var stored = JSON.parse(localStorage.getItem('opendaq-studio:settings') || '{}');
+          if (stored.theme === 'dark' || (stored.theme === 'system' && (stored.version || 1) >= 2)) theme = stored.theme;
+        } catch (error) {}
+        if (theme !== 'system') document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+    <meta name="description" content="openDAQ Studio - every device, signal, function block and setting of an openDAQ instance." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/opendaq-icon.png" />
+    <!-- HBK Dark Blue, per the openDAQ Design Manual v1.0. -->
+    <meta name="theme-color" content="#00335A" />
+    <title>openDAQ Studio</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

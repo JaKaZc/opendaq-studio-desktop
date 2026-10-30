@@ -1,0 +1,25 @@
+{
+  "name": "opendaq-studio-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "openDAQ Studio desktop shell",
+  "license": "Apache-2.0",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "npm run build && electron . --dev",
+    "start": "npm run build && electron .",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:linux": "npm run build && electron-builder --linux"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8",
+    "resedit": "^3.1.0",
+    "typescript": "^5.9.3"
+  }
+}
